@@ -24,17 +24,19 @@ const int delayTime = 300;
 
 // breakbeam interrupt
 void gpio_callback(uint gpio, uint32_t events) {
-    if ((to_ms_since_boot(get_absolute_time())-time)>delayTime) {
-        time = to_ms_since_boot(get_absolute_time());
-        item_count++;
-        data_to_show = true;
+    if (gpio == BREAKBEAM_PIN)
+    {
+        if ((to_ms_since_boot(get_absolute_time())-time)>delayTime) {
+            time = to_ms_since_boot(get_absolute_time());
+            item_count++;
+            data_to_show = true;
+        }
     }
 }
 
 bool motor_speed_update(struct repeating_timer *t) {
     uint32_t result = adc_read();
     uint slice_num = pwm_gpio_to_slice_num(STEP_PIN);
-    result /= 2;
     result += 2000;
     pwm_set_wrap(slice_num, result);
     pwm_set_chan_level(slice_num, PWM_CHAN_A, result/2);
@@ -54,12 +56,13 @@ int main() {
     lcd_init();
     char disp_buf[16] = {};
     data_to_show = true;
+    item_count = 0;
 
 //  prepare stepper motor
     gpio_init(DIR_PIN);
     gpio_set_dir(DIR_PIN, GPIO_OUT);
-    gpio_put(DIR_PIN, 1); // Set motor direction clockwise
-    
+    gpio_put(DIR_PIN, 0); // Set motor direction counter-clockwise
+
     gpio_init(STEP_PIN);
     gpio_set_dir(STEP_PIN, GPIO_OUT);
     gpio_set_function(STEP_PIN, GPIO_FUNC_PWM);
